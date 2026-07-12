@@ -1,0 +1,121 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Paleta ejecutiva — alineada con Estado de Resultados */
+    --exec-navy:       #0F2438;
+    --exec-navy-dark:  #091A2C;
+    --exec-navy-light: #1F3A52;
+    --exec-gold:       #C9A55C;
+    --exec-ivory:      #FAF7F0;
+    --exec-green:      #1E7A4F;
+    --exec-red:        #B43A3A;
+    --exec-amber:      #C97A1E;
+    --exec-card-border:#E5E1D6;
+    --exec-text-mute:  #5A6470;
+  }
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    /* Tipografía ejecutiva: Segoe UI (nativa Windows) — alineada con Estado de Resultados */
+    font-family: "Segoe UI", "Segoe UI Variable", -apple-system, BlinkMacSystemFont, "SF Pro Text", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #FFFFFF;
+    color: var(--exec-navy);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.005em;
+  }
+  h1, h2, h3, h4 {
+    color: var(--exec-navy);
+    font-family: "Segoe UI", "Segoe UI Semibold", -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.015em;
+  }
+}
+
+@layer components {
+  /* Tarjetas con borde difuminado azul navy sutil */
+  .napsa-card {
+    @apply bg-white rounded-2xl shadow-soft-glow p-5 border-0;
+  }
+  .napsa-kpi {
+    @apply bg-white rounded-2xl shadow-soft-glow px-4 py-4 border-0;
+  }
+  .napsa-icon {
+    @apply w-10 h-10 rounded-full flex items-center justify-center shrink-0;
+  }
+  /* Variante "crema" para tarjetas dentro del Tablero Financiero ejecutivo */
+  .exec-card {
+    @apply bg-exec-cardCream rounded-2xl shadow-soft-glow-gold px-5 py-4 border-0;
+  }
+  /* Título serif disponible (no se aplica globalmente) */
+  .h-display {
+    @apply font-display font-semibold tracking-tightest;
+  }
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+
+/* ========================================================================
+   ESTILOS DE IMPRESIÓN — Solo informe del mes, sin chrome del dashboard
+   ======================================================================== */
+@media print {
+  /* Tamaño página A4 horizontal con márgenes generosos */
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+
+  /* Reset general */
+  html, body {
+    background: #FFFFFF !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body * {
+    visibility: hidden;
+  }
+  /* Mostrar solo la sección a imprimir y sus hijos */
+  .print-area, .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  /* Ocultar chrome del dashboard */
+  header,
+  aside,
+  nav,
+  .lg\:flex.lg\:flex-col.w-56,        /* SideNav principal */
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  /* Las tarjetas con sombras suaves se ven mejor con un borde sutil al imprimir */
+  .napsa-card, .napsa-kpi,
+  [class*="shadow-soft-glow"] {
+    box-shadow: none !important;
+    border: 1px solid #E4E4E7 !important;
+    page-break-inside: avoid;
+  }
+
+  /* Saltos de página entre secciones grandes */
+  .print-page-break {
+    page-break-after: always;
+  }
+
+  /* Reducir tamaños grandes para que quepa */
+  .text-\[28px\], .text-\[32px\], .text-\[40px\], .text-\[44px\], .text-\[52px\] {
+    font-size: 24px !important;
+  }
+}
