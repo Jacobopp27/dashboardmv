@@ -26,11 +26,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import json
 import math
+import os
+import re as _re_mod
+import shutil
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, File, Header, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
+from config.settings import DATA_ROOT
 from ingestor.financiero import load_financiero
 from ingestor.loader import load_all
 
@@ -107,6 +111,62 @@ def _df_records(df: pd.DataFrame) -> list[dict]:
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+# ============ Carga de archivos vía web (para actualizar desde cualquier PC) ============
+# Clave de carga: se define como variable de entorno UPLOAD_KEY en Railway.
+# Sin la clave correcta, nadie puede subir archivos.
+UPLOAD_KEY = os.environ.get("UPLOAD_KEY", "")
+
+
+@app.on_event("startup")
+def _seed_volume():
+    """En Railway: si DATA_ROOT apunta a un volumen persistente vacío,
+    copiar los Excel que viajaron con el repo (/app/data) como semilla inicial."""
+    seed = Path("/app/data")
+    try:
+        if (
+            os.environ.get("DATA_ROOT")
+            and seed.exists()
+            and DATA_ROOT.resolve() != seed.resolve()
+            and not any(DATA_ROOT.rglob("*.xls*"))
+        ):
+            shutil.copytree(seed, DATA_ROOT, dirs_exist_ok=True)
+    except Exception:
+        pass  # sin semilla no es fatal: se puede subir todo vía /api/upload
+
+
+@app.post("/api/upload")
+async def upload_excel(
+    file: UploadFile = File(...),
+    x_upload_key: str = Header(default=""),
+):
+    """Sube un archivo Excel nuevo (informe mensual, cartera, recaudo...).
+
+    El archivo se guarda en DATA_ROOT/SUBIDOS/ y el caché se invalida, de modo
+    que el siguiente consulta ya incluye el mes nuevo. Los parsers lo detectan
+    automáticamente por el patrón del nombre (ej. '06-2026-INFORMES FINANCIEROS...').
+    """
+    if not UPLOAD_KEY:
+        raise HTTPException(503, "Carga deshabilitada: falta configurar UPLOAD_KEY en el servidor")
+    if x_upload_key != UPLOAD_KEY:
+        raise HTTPException(401, "Clave de carga incorrecta")
+
+    nombre = Path(file.filename or "").name
+    if not _re_mod.search(r"\.xls[xm]?$", nombre, _re_mod.IGNORECASE):
+        raise HTTPException(400, "Solo se aceptan archivos Excel (.xls / .xlsx / .xlsm)")
+
+    destino_dir = DATA_ROOT / "SUBIDOS"
+    destino_dir.mkdir(parents=True, exist_ok=True)
+    destino = destino_dir / nombre
+    with destino.open("wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    # Invalidar caché para que el próximo GET relea todo (incluye el archivo nuevo)
+    _CACHE.pop("data", None)
+    _CACHE.pop("fin", None)
+
+    return {"status": "ok", "guardado": nombre, "carpeta": "SUBIDOS"}
 
 
 @app.post("/api/refresh")

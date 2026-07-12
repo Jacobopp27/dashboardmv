@@ -1,4 +1,5 @@
 import { RefreshCw } from "lucide-react";
+import { UploadExcel } from "./UploadExcel";
 import { PeriodSelector } from "./PeriodSelector";
 import { LogoMonteverdi } from "./LogoMonteverdi";
 
@@ -35,6 +36,8 @@ export function TopBar({ onRefresh, refreshing, yearFilter, monthFromFilter, mon
           onYearChange={onYearChange}
           onRangeChange={onRangeChange}
         />
+
+        <UploadExcel onUploaded={onRefresh} />
 
         <button
           onClick={onRefresh}

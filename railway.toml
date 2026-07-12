@@ -1,4 +1,7 @@
-# Configuración de despliegue en Railway para el backend Monteverdi
+# Configuración de despliegue en Railway para el backend Monteverdi.
+# IMPORTANTE: en Railway hay que crear un VOLUMEN persistente montado en /data
+# y definir DATA_ROOT=/data para que los Excel subidos por la web no se borren
+# en cada redespliegue. Ver DESPLIEGUE.md paso 2.
 [build]
 builder = "NIXPACKS"
 
